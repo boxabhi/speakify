@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block start %}
+
+<nav class="navbar bg-primary shadow-lg p-3 " data-bs-theme="dark">
+    <div class="container">
+        <b class="text-white">Speakify</b>
+    </div>
+</nav>
+
+
+<div class="container col-6 mt-5">
+    <div class="row">
+        <div class="col-md-6">
+            Your Status  : 
+        </div>
+        <div class="col-md-6">
+            <div class="form-check form-switch">
+                <input class="form-check-input" onchange="toggleStatus()" type="checkbox"   role="switch" id="onlineCheckBox">
+                <label class="form-check-label" id="onlineCheckBoxText" for="onlineCheckBox">Online</label>
+              </div>
+        </div>
+    </div>
+    
+    <p id ="foundUserDetails"></p>
+
+    <div class="text-center mt-5">
+        {{request.user.email}}
+        <button class="btn btn-success" onclick="connectWithPerson()"> Connect</button>
+    </div>
+   
+</div>
+
+
+
+
+<script>
+
+    var element = document.getElementById('onlineCheckBox')
+    var url = 'ws://localhost:8000/ws/online/?user_id={{request.user.id}}'
+    var user_room_url = "ws://localhost:8000/ws/user_room/{{request.user.id}}"
+   
+    var socket = new WebSocket(url);
+    var user_room_socket = new WebSocket(user_room_url)
+
+    user_room_socket.onopen = function(e){
+        console.log("User room connected")
+    }
+
+    user_room_socket.onmessage = function(e){
+        var data = JSON.parse(e.data)
+        console.log(data)
+
+        
+        if("found" in data.payload ){
+            if(data.payload.found){
+            var html = `
+            <ul>
+                <li> Name : ${data.payload.full_name} </li>
+                <li> Gender : ${data.payload.gender} </li>
+                <li> Gender : ${data.payload.country} </li>
+            </ul>
+            `
+
+            document.getElementById('foundUserDetails').innerHTML = html
+
+            setTimeout(()=>{
+                window.location.href= `/chat/${data.payload.chat_room_code}/`
+            }, 2000)
+
+        }else{
+            alert("Not able to find user!! :(")
+        }
+    }
+}
+
+    socket.onopen = function(e){
+        console.log('socket connected')
+    }
+    socket.onmessage = function(e){
+            var data = JSON.parse(e.data);
+            //console.log(data.status)   
+
+            if("status" in data){
+               
+                console.log(data.status)
+                    if(data.status){
+                        document.getElementById('onlineCheckBoxText').innerHTML  = "Online"
+                    }else{
+                        document.getElementById('onlineCheckBoxText').innerHTML  = "Offline"
+                    }
+            }
+    }
+    function toggleStatus(){
+        socket.send(JSON.stringify({
+            'type': 'toggle_status',
+            'user_id': '{{request.user.id}}',
+          
+          }))
+    }
+
+    function connectWithPerson(){
+        user_room_socket.send(JSON.stringify({
+            'type': 'connect_person',
+            'user_id': '{{request.user.id}}',
+          }))
+    }
+
+    socket.onclose = function(e){
+        console.log('socket disconnected')
+    }
+
+
+
+
+
+</script>
+
+
+
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block start %}
+
+<nav class="navbar bg-primary shadow-lg p-3 " data-bs-theme="dark">
+    <div class="container">
+        <b class="text-white">Speakify</b>
+    </div>
+</nav>
+
+
+<div class="container col-6 mt-5">
+    <div class="row">
+        <div class="col-md-6">
+           You are connected !!! :)
+        </div>
+        
+        <ul id="chats">
+
+        </ul>
+
+        <div class="form-group">
+            <label>Enter message</label>
+            <input class="form-control" id="inputMessage">
+            <button class="btn btn-danger mt-2" onclick="sendMessage()">
+                Send Message
+            </button>
+        </div>
+     
+
+
+    </div>
+
+
+
+</div>
+
+
+
+<script>
+
+    var element = document.getElementById('onlineCheckBox')
+    var url = 'ws://localhost:8000/ws/chat_room/{{chat_room_id}}/'
+    
+    var chat_room_socket = new WebSocket(url);
+    
+    chat_room_socket.onopen = function(e){
+        console.log("User room connected")
+    }
+
+
+    function sendMessage(){
+       var inputMessage =  document.getElementById('inputMessage').value
+
+       if(inputMessage == "" || inputMessage == " "){
+        alert("Please enter something!!")
+        return
+       }
+
+       chat_room_socket.send(JSON.stringify({
+            'type': 'chat_message',
+            'user': '{{request.user.full_name}}',
+            "message" : inputMessage
+          
+        }))
+
+
+    }
+
+    chat_room_socket.onmessage = function(e){
+        var data = JSON.parse(e.data)
+        console.log(data)
+        if('user' in data.payload){
+            var chats = document.getElementById('chats')
+        chats.innerHTML += `<li><b>Message -> ${data.payload.user} : ${data.payload.message} </b> </li> ` 
+        console.log(data)
+
+        var inputMessage =  document.getElementById('inputMessage')
+        inputMessage.value = ""
+        }
+
+       
+    }
+
+
+    </script>
+
+
+    {% endblock %}

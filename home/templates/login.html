@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block start %}
+<nav class="navbar bg-primary shadow-lg p-3 " data-bs-theme="dark">
+   <div class="container">
+    <b class="text-white">Speakify</b>
+   </div>
+    
+  </nav>
+
+<div class="container md-auto col-5 mt-5">
+    <form>
+        <div class="mb-3">
+          <label for="exampleInputEmail1" class="form-label">Email address</label>
+          <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+          <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+        </div>
+        <div class="mb-3">
+          <label for="exampleInputPassword1" class="form-label">Password</label>
+          <input type="password" class="form-control" id="exampleInputPassword1">
+        </div>
+        <div class="mb-3 form-check">
+          <input type="checkbox" class="form-check-input" id="exampleCheck1">
+          <label class="form-check-label" for="exampleCheck1">Check me out</label>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+</div>
+
+
+
+    <script>
+        var url = 'ws://localhost:8000/ws/test/'
+        
+        var socket = new WebSocket(url);
+
+
+        socket.onopen = function(e){
+            console.log('socket connected')
+        }
+
+        socket.onmessage = function(e){
+            var data = JSON.parse(e.data);
+            console.log(data)
+            if(data.payload){
+                addData(data.payload)
+                increaseProgress(data.payload.total , data.payload.current_total)
+            }
+
+        }
+        socket.onclose = function(e){
+            console.log('socket disconnected')
+        }
+
+
+        function addData(data){
+            var html = `
+            <tr>
+      <th scope="row">${data.id}</th>
+      <td>${data.student_name}</td>
+      <td>${data.student_age}</td>
+      <td>${data.address}</td>
+    </tr>
+            `
+
+            document.getElementById('table_data').innerHTML += html
+
+        }
+
+
+
+        function increaseProgress(total , current_total){
+            
+            var element = document.querySelector('.progress-bar')
+
+            var percent = parseInt((current_total / total)* 100)
+
+            document.getElementById('complete').innerHTML  =  percent + '%'
+
+            element.style.width =  percent + '%'
+        }
+
+    </script>
+
+   
+{% endblock %}
